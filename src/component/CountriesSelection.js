@@ -69,7 +69,7 @@ export default function CountriesSelection({
 
   const renderDataCountries = (data) => {
     return data.map((country) => (
-      <Grid item lg={4} md={4}>
+      <Grid item lg={4} md={4} key={country.name}>
         <Card
           className={clsx(classes.root, {
             [classes.isComing]: country.isComing,

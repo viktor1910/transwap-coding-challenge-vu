@@ -12,7 +12,7 @@ import BanksInCountry from "./component/BanksInCountry";
 const useStyles = makeStyles({
   root: {
     backgroundColor: "#F2F3FA",
-    height: "100vh",
+    height: "100%",
     color: "#000000",
   },
 });

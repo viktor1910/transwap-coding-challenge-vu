@@ -57,28 +57,24 @@ const useStyles = makeStyles({
     borderTop: "5px solid #F2F3FA",
   },
 });
+const fetchBanks = async (id) => {
+  const res = await fetch(
+    `https://my-json-server.typicode.com/fred-ng/transwap-coding-challenge/banks/${id}`
+  );
+  if (!res.ok) {
+    throw new Error("Network response was not ok");
+  }
+  return res.json();
+};
 
 export default function BanksInCountry({ banks }) {
   const classes = useStyles();
-  const [expanded, setExpanded] = useState(0);
-  const fetchBanks = async (id) => {
-    const res =
-      id !== 0 &&
-      (await fetch(
-        `https://my-json-server.typicode.com/fred-ng/transwap-coding-challenge/banks/${id}`
-      ));
-    if (!res.ok) {
-      throw new Error("Network response was not ok");
-    }
-    return res.json();
-  };
+  const [expanded, setExpanded] = useState(banks[0].id || 1);
+
   const { data, isLoading, isError, error } = useQuery(
     ["supportedBank", expanded],
     () => fetchBanks(expanded)
   );
-  const handleChange = (panel) => {
-    setExpanded(panel);
-  };
 
   const renderSuportedBank = () => {
     return (
@@ -86,7 +82,8 @@ export default function BanksInCountry({ banks }) {
       banks.map((bank) => (
         <Accordion
           expanded={expanded === bank.id}
-          onChange={() => handleChange(bank.id)}
+          onChange={() => setExpanded(bank.id)}
+          key={bank.name}
         >
           <AccordionSummary
             aria-controls={`${bank.name}-content`}
