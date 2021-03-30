@@ -31,7 +31,8 @@ function App() {
   const classes = useStyles();
   const { data, isLoading, isError, error } = useQuery(
     "countries",
-    fetchCountries
+    fetchCountries,
+    { keepPreviousData: true, staleTime: 50000 }
   );
   const [selectedCountry, setSelectedCountry] = useState(1);
   return (

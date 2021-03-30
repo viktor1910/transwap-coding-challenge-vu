@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery } from "react-query";
 import { makeStyles } from "@material-ui/core/styles";
 import clsx from "clsx";
@@ -19,9 +19,14 @@ const useStyles = makeStyles({
     border: "none",
     boxShadow: "none",
   },
+  header: {
+    display: "flex",
+    padding: "0px 16px",
+  },
   heading: {
     flexBasis: "70%",
     flexShrink: 0,
+    cursor: "pointer",
     "& svg": {
       verticalAlign: "bottom",
     },
@@ -31,6 +36,7 @@ const useStyles = makeStyles({
     textAlign: "center",
     padding: "10px 0px",
     borderRadius: "8px",
+    cursor: "pointer",
   },
   listBanks: {
     display: "block",
@@ -67,23 +73,48 @@ const fetchBanks = async (id) => {
   return res.json();
 };
 
+const useSortableData = (items) => {
+  const [sortConfig, setSortConfig] = React.useState(null);
+
+  const sortedItems = React.useMemo(() => {
+    let sortableItems = [...items];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        if (sortConfig === "name") return a.name > b.name;
+        if (sortConfig === "status") return a.isActive < b.isActive;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [items, sortConfig]);
+
+  const requestSort = (key) => {
+    setSortConfig(key);
+  };
+
+  return { items: sortedItems, requestSort };
+};
+
 export default function BanksInCountry({ banks }) {
   const classes = useStyles();
   const [expanded, setExpanded] = useState(banks[0].id || 1);
 
-  const { data, isLoading, isError, error } = useQuery(
+  const { items, requestSort } = useSortableData(banks);
+
+  const { data, isError, error, isFetching } = useQuery(
     ["supportedBank", expanded],
-    () => fetchBanks(expanded)
+    () => fetchBanks(expanded),
+    { keepPreviousData: true, staleTime: 50000 }
   );
 
   const renderSuportedBank = () => {
     return (
-      banks &&
-      banks.map((bank) => (
+      items &&
+      items.map((bank) => (
         <Accordion
           expanded={expanded === bank.id}
-          onChange={() => setExpanded(bank.id)}
           key={bank.name}
+          onChange={() => setExpanded(bank.id)}
         >
           <AccordionSummary
             aria-controls={`${bank.name}-content`}
@@ -101,11 +132,11 @@ export default function BanksInCountry({ banks }) {
             </Typography>
           </AccordionSummary>
           <AccordionDetails className={classes.detailBank}>
-            {isLoading && <CircularProgress />}
+            {isFetching && <CircularProgress />}
             {isError && (
               <Alert severity="error">Something went wrong — {error}!</Alert>
             )}
-            {data && (
+            {data && !isFetching && (
               <div>
                 <Typography variant="h4">{data.name}</Typography>
                 <img src={data.logoUrl} alt={data.name} />
@@ -125,18 +156,28 @@ export default function BanksInCountry({ banks }) {
     );
   };
   return (
-    <Accordion className={classes.root}>
-      <AccordionSummary aria-controls="main-content" id="main-content-header">
-        <Typography color="primary" className={classes.heading}>
+    <div className={classes.root}>
+      <div
+        className={classes.header}
+        aria-controls="main-content"
+        id="main-content-header"
+      >
+        <Typography
+          color="primary"
+          className={classes.heading}
+          onClick={() => requestSort("name")}
+        >
           Bank name <ExpandMoreOutlinedIcon />
         </Typography>
-        <Typography color="textSecondary" className={classes.status}>
+        <Typography
+          color="textSecondary"
+          className={classes.status}
+          onClick={() => requestSort("status")}
+        >
           Status
         </Typography>
-      </AccordionSummary>
-      <AccordionDetails className={classes.listBanks}>
-        {renderSuportedBank()}
-      </AccordionDetails>
-    </Accordion>
+      </div>
+      <div className={classes.listBanks}>{renderSuportedBank()}</div>
+    </div>
   );
 }
